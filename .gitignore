@@ -1,0 +1,50 @@
+# Operating system
+.DS_Store
+.DS_Store?
+._*
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Editors and IDEs
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+*.sublime-project
+*.sublime-workspace
+
+# Cursor local state
+.cursor/
+
+# Secrets, keys, and credentials
+.env
+.env.*
+!.env.example
+*.pem
+*.p12
+*.key
+*.crt
+credentials.json
+client_secret*.json
+*-credentials.json
+service-account*.json
+serviceAccount*.json
+
+# Packaged / signed extension artifacts
+dist/
+build/
+*.zip
+*.crx
+*.xpi
+
+# Node (if tooling is added later)
+node_modules/
+npm-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Logs and local overrides
+*.log
+*.local

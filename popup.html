@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>World Clock Tab</title>
+    <link rel="stylesheet" href="css/popup.css" />
+  </head>
+  <body>
+    <div class="shell">
+      <header class="bar">
+        <h1>World Clock Tab</h1>
+        <button type="button" id="gearBtn" class="icon-btn" aria-label="Settings" title="Settings">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path
+              fill="currentColor"
+              d="M19.14 12.94c.04-.31.06-.63.06-.94s-.02-.63-.06-.94l2.03-1.58a.5.5 0 0 0 .12-.64l-1.92-3.32a.5.5 0 0 0-.6-.22l-2.39.96a7.2 7.2 0 0 0-1.63-.94l-.36-2.54a.5.5 0 0 0-.5-.42h-3.84a.5.5 0 0 0-.5.42l-.36 2.54c-.59.22-1.14.53-1.63.94l-2.39-.96a.5.5 0 0 0-.6.22L2.77 8.84a.5.5 0 0 0 .12.64l2.03 1.58c-.04.31-.06.63-.06.94s.02.63.06.94L2.89 14.52a.5.5 0 0 0-.12.64l1.92 3.32c.13.22.4.31.6.22l2.39-.96c.49.41 1.04.72 1.63.94l.36 2.54c.05.24.26.42.5.42h3.84c.24 0 .45-.18.5-.42l.36-2.54c.59-.22 1.14-.53 1.63-.94l2.39.96c.22.09.47 0 .6-.22l1.92-3.32a.5.5 0 0 0-.12-.64l-2.03-1.58zM12 15.5A3.5 3.5 0 1 1 12 8.5a3.5 3.5 0 0 1 0 7z"
+            />
+          </svg>
+        </button>
+      </header>
+
+      <main id="cityList" class="city-grid"></main>
+
+      <footer class="bar footer">
+        <button type="button" id="addBtn" class="primary">Add city</button>
+      </footer>
+    </div>
+
+    <section id="settingsPanel" class="overlay" hidden>
+      <div class="panel">
+        <h2>Settings</h2>
+        <label class="toggle">
+          <span>24-hour format</span>
+          <input type="checkbox" id="use24Hour" />
+          <span class="slider"></span>
+        </label>
+        <label class="toggle">
+          <span>Show seconds</span>
+          <input type="checkbox" id="showSeconds" />
+          <span class="slider"></span>
+        </label>
+        <button type="button" id="settingsDone" class="primary">Done</button>
+      </div>
+    </section>
+
+    <section id="addPanel" class="overlay" hidden>
+      <div class="panel">
+        <h2>Add city</h2>
+        <label>
+          City
+          <input type="text" id="cityInput" autocomplete="off" placeholder="Rome" />
+        </label>
+        <p class="hint" id="tzHint">Time zone will appear here</p>
+        <label>
+          Display name (optional)
+          <input type="text" id="nameInput" autocomplete="off" placeholder="Same as city" />
+        </label>
+        <div class="row">
+          <button type="button" id="addCancel">Cancel</button>
+          <button type="button" id="addConfirm" class="primary" disabled>Add</button>
+        </div>
+      </div>
+    </section>
+
+    <input type="file" id="photoFile" accept="image/*" hidden />
+    <script type="module" src="js/popup.js"></script>
+  </body>
+</html>

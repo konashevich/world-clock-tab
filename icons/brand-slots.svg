@@ -1,0 +1,66 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <defs>
+    <linearGradient id="syd" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#F7C84C"/>
+      <stop offset="0.55" stop-color="#F0A02A"/>
+      <stop offset="1" stop-color="#E06A16"/>
+    </linearGradient>
+    <linearGradient id="kyiv" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#7EC4FF"/>
+      <stop offset="1" stop-color="#2F7AE8"/>
+    </linearGradient>
+    <linearGradient id="lon" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#2A4A78"/>
+      <stop offset="1" stop-color="#0E1A32"/>
+    </linearGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FFE08A"/>
+      <stop offset="1" stop-color="#C98918"/>
+    </linearGradient>
+    <clipPath id="c1"><rect x="4" y="4" width="38" height="120" rx="18"/></clipPath>
+    <clipPath id="c2"><rect x="45" y="4" width="38" height="120" rx="18"/></clipPath>
+    <clipPath id="c3"><rect x="86" y="4" width="38" height="120" rx="18"/></clipPath>
+  </defs>
+
+  <g clip-path="url(#c1)">
+    <rect x="4" y="4" width="38" height="120" fill="url(#syd)"/>
+    <circle cx="23" cy="28" r="9" fill="#FFF4C8"/>
+    <path fill="#FFF6E8" d="M4 78c8-18 16-22 19-8 2-16 10-22 19-6v28H4z"/>
+    <path fill="#FFE9C4" d="M4 92c7-14 14-16 16-4 3-12 9-16 18-4v16H4z"/>
+    <rect x="9" y="92" width="28" height="22" rx="9" fill="#000" fill-opacity=".45"/>
+    <rect x="14" y="98" width="18" height="3.2" rx="1.6" fill="#fff"/>
+    <rect x="14" y="104.5" width="18" height="3.2" rx="1.6" fill="#fff"/>
+  </g>
+
+  <g clip-path="url(#c2)">
+    <rect x="45" y="4" width="38" height="120" fill="url(#kyiv)"/>
+    <g fill="url(#gold)">
+      <rect x="58" y="58" width="12" height="34" rx="1"/>
+      <ellipse cx="64" cy="52" rx="9" ry="14"/>
+      <rect x="50" y="70" width="8" height="22"/>
+      <rect x="70" y="70" width="8" height="22"/>
+      <ellipse cx="54" cy="66" rx="5" ry="8"/>
+      <ellipse cx="74" cy="66" rx="5" ry="8"/>
+      <rect x="62.6" y="34" width="2.8" height="8" rx=".6"/>
+      <rect x="60.4" y="34" width="7.2" height="2.2" rx=".6"/>
+    </g>
+    <rect x="50" y="92" width="28" height="22" rx="9" fill="#000" fill-opacity=".45"/>
+    <rect x="55" y="98" width="18" height="3.2" rx="1.6" fill="#fff"/>
+    <rect x="55" y="104.5" width="18" height="3.2" rx="1.6" fill="#fff"/>
+  </g>
+
+  <g clip-path="url(#c3)">
+    <rect x="86" y="4" width="38" height="120" fill="url(#lon)"/>
+    <path fill="#F3E6B8" d="M112 18a8 8 0 1 1-10 10 6.2 6.2 0 1 0 10-10z"/>
+    <g fill="#0A1428">
+      <rect x="99" y="42" width="12" height="50" rx="1"/>
+      <polygon points="105,24 111,42 99,42"/>
+      <rect x="102.5" y="28" width="5" height="10" rx=".5"/>
+    </g>
+    <rect x="103.4" y="58" width="3.2" height="6" rx=".4" fill="#F0C94A"/>
+    <rect x="103.4" y="68" width="3.2" height="6" rx=".4" fill="#F0C94A"/>
+    <rect x="91" y="92" width="28" height="22" rx="9" fill="#000" fill-opacity=".45"/>
+    <rect x="96" y="98" width="18" height="3.2" rx="1.6" fill="#fff"/>
+    <rect x="96" y="104.5" width="18" height="3.2" rx="1.6" fill="#fff"/>
+  </g>
+</svg>

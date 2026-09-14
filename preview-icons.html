@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Toolbar clock icon previews</title>
+    <style>
+      :root {
+        --bg: #1b1b1b;
+        --ink: #eee;
+        --muted: #9a9a9a;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        font-family: "Segoe UI", Roboto, sans-serif;
+        background: var(--bg);
+        color: var(--ink);
+        padding: 24px 28px 48px;
+      }
+      h1 {
+        margin: 0 0 8px;
+        font-size: 22px;
+        font-weight: 600;
+      }
+      .lead {
+        margin: 0 0 22px;
+        color: var(--muted);
+        max-width: 720px;
+        line-height: 1.45;
+      }
+      .toolbar {
+        display: flex;
+        gap: 28px;
+        margin-bottom: 28px;
+      }
+      .toolbar-strip {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 14px;
+        border-radius: 8px;
+      }
+      .toolbar-strip.light {
+        background: #dfe3ea;
+      }
+      .toolbar-strip.dark {
+        background: #2b2f36;
+      }
+      .toolbar-strip span {
+        font-size: 12px;
+        color: #666;
+        margin-right: 6px;
+      }
+      .toolbar-strip.dark span {
+        color: #bbb;
+      }
+      .live {
+        display: block;
+      }
+      .variant {
+        margin-bottom: 28px;
+        padding: 16px 18px 18px;
+        background: #111;
+        border-radius: 12px;
+      }
+      .variant h2 {
+        margin: 0 0 4px;
+        font-size: 16px;
+      }
+      .variant p {
+        margin: 0 0 14px;
+        color: var(--muted);
+        font-size: 13px;
+      }
+      .row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 22px;
+        align-items: flex-end;
+      }
+      .cell {
+        text-align: center;
+      }
+      .label {
+        font-size: 11px;
+        color: var(--muted);
+        margin-top: 6px;
+      }
+      canvas.actual {
+        display: block;
+        background: transparent;
+      }
+      .mag-wrap {
+        display: inline-block;
+        background: #2a2a2a;
+        padding: 6px;
+        border-radius: 6px;
+      }
+      canvas.mag {
+        display: block;
+        image-rendering: pixelated;
+        image-rendering: crisp-edges;
+      }
+      .times {
+        display: flex;
+        gap: 10px;
+        margin-top: 12px;
+      }
+      .times canvas {
+        display: block;
+        background: #2a2a2a;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Toolbar analog clock, real size</h1>
+    <p class="lead">
+      The left chips are the real toolbar size (16 CSS pixels). Next to them is the same bitmap
+      enlarged 8 times, pixel for pixel, so you can see the drawing. The first row is the design
+      that is in the extension now. The rest are alternatives. Pick one and we can ship it.
+    </p>
+    <div class="toolbar">
+      <div class="toolbar-strip light">
+        <span>Light bar</span>
+        <canvas class="live" data-theme="light" width="16" height="16"></canvas>
+      </div>
+      <div class="toolbar-strip dark">
+        <span>Dark bar</span>
+        <canvas class="live" data-theme="dark" width="16" height="16"></canvas>
+      </div>
+    </div>
+    <div id="board"></div>
+    <script>
+      const TIMES = [
+        { h: 10, m: 8, label: "10:08" },
+        { h: 3, m: 0, label: "3:00" },
+        { h: 6, m: 30, label: "6:30" },
+        { h: 12, m: 45, label: "12:45" },
+      ];
+      const SIZES = [16, 32];
+
+      function hands(hour, minute) {
+        const minuteAngle = (minute / 60) * Math.PI * 2 - Math.PI / 2;
+        const hourAngle =
+          ((hour % 12) / 12) * Math.PI * 2 + (minute / 60) * (Math.PI / 6) - Math.PI / 2;
+        return { minuteAngle, hourAngle };
+      }
+
+      function circle(ctx, cx, cy, r, fill, stroke, width) {
+        ctx.beginPath();
+        ctx.arc(cx, cy, r, 0, Math.PI * 2);
+        if (fill) {
+          ctx.fillStyle = fill;
+          ctx.fill();
+        }
+        if (stroke) {
+          ctx.strokeStyle = stroke;
+          ctx.lineWidth = width;
+          ctx.stroke();
+        }
+      }
+
+      function ticks(ctx, cx, cy, r, count, inner, outer, color, width) {
+        for (let i = 0; i < count; i++) {
+          const a = (i / count) * Math.PI * 2 - Math.PI / 2;
+          ctx.beginPath();
+          ctx.moveTo(cx + Math.cos(a) * inner, cy + Math.sin(a) * inner);
+          ctx.lineTo(cx + Math.cos(a) * outer, cy + Math.sin(a) * outer);
+          ctx.strokeStyle = color;
+          ctx.lineWidth = width;
+          ctx.stroke();
+        }
+      }
+
+      function drawHands(ctx, cx, cy, r, hour, minute, hourW, minuteW, color, hourLen, minLen) {
+        const { minuteAngle, hourAngle } = hands(hour, minute);
+        ctx.strokeStyle = color;
+        ctx.lineCap = "round";
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        ctx.lineTo(cx + Math.cos(hourAngle) * r * hourLen, cy + Math.sin(hourAngle) * r * hourLen);
+        ctx.lineWidth = hourW;
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        ctx.lineTo(cx + Math.cos(minuteAngle) * r * minLen, cy + Math.sin(minuteAngle) * r * minLen);
+        ctx.lineWidth = minuteW;
+        ctx.stroke();
+      }
+
+      function current(ctx, size, hour, minute) {
+        const compact = size <= 16;
+        const cx = size / 2;
+        const cy = size / 2;
+        const r = size / 2 - (compact ? 1 : 2);
+        ctx.clearRect(0, 0, size, size);
+        circle(ctx, cx, cy, r, "#f7f7f7", "#478cf7", compact ? 1 : Math.max(2, size * 0.06));
+        ticks(ctx, cx, cy, r, compact ? 4 : 12, r * (compact ? 0.72 : 0.78), r * (compact ? 0.92 : 0.9), "#333", compact ? 1 : 1);
+        drawHands(ctx, cx, cy, r, hour, minute, compact ? 1.5 : Math.max(2, size * 0.07), compact ? 1 : Math.max(1.5, size * 0.045), "#222", 0.5, 0.72);
+        circle(ctx, cx, cy, compact ? 1.25 : size * 0.045, "#ffa91a");
+      }
+
+      function fillContrast(ctx, size, hour, minute) {
+        const cx = size / 2;
+        const cy = size / 2;
+        const r = size / 2 - 0.5;
+        ctx.clearRect(0, 0, size, size);
+        circle(ctx, cx, cy, r, "#fff", "#111", size <= 16 ? 1 : 2);
+        if (size > 16) ticks(ctx, cx, cy, r, 12, r * 0.82, r * 0.93, "#111", 1);
+        else ticks(ctx, cx, cy, r, 4, r * 0.78, r * 0.94, "#111", 1.25);
+        drawHands(
+          ctx,
+          cx,
+          cy,
+          r,
+          hour,
+          minute,
+          size <= 16 ? 2.2 : size * 0.12,
+          size <= 16 ? 1.4 : size * 0.07,
+          "#111",
+          0.52,
+          0.78
+        );
+        circle(ctx, cx, cy, size <= 16 ? 1.4 : size * 0.05, "#111");
+      }
+
+      function darkFace(ctx, size, hour, minute) {
+        const cx = size / 2;
+        const cy = size / 2;
+        const r = size / 2 - 0.5;
+        ctx.clearRect(0, 0, size, size);
+        circle(ctx, cx, cy, r, "#111", "#eee", size <= 16 ? 1 : 2);
+        if (size > 16) ticks(ctx, cx, cy, r, 12, r * 0.8, r * 0.92, "#ddd", 1);
+        else ticks(ctx, cx, cy, r, 4, r * 0.76, r * 0.93, "#eee", 1.25);
+        drawHands(
+          ctx,
+          cx,
+          cy,
+          r,
+          hour,
+          minute,
+          size <= 16 ? 2.2 : size * 0.12,
+          size <= 16 ? 1.35 : size * 0.065,
+          "#fff",
+          0.5,
+          0.78
+        );
+        circle(ctx, cx, cy, size <= 16 ? 1.4 : size * 0.05, "#fff");
+      }
+
+      function fatHandsNoTicks(ctx, size, hour, minute) {
+        const cx = size / 2;
+        const cy = size / 2;
+        const r = size / 2 - 0.5;
+        ctx.clearRect(0, 0, size, size);
+        circle(ctx, cx, cy, r, "#fff", "#000", size <= 16 ? 1.25 : 2.5);
+        drawHands(
+          ctx,
+          cx,
+          cy,
+          r,
+          hour,
+          minute,
+          size <= 16 ? 2.6 : size * 0.14,
+          size <= 16 ? 1.6 : size * 0.08,
+          "#000",
+          0.48,
+          0.8
+        );
+        circle(ctx, cx, cy, size <= 16 ? 1.6 : size * 0.055, "#000");
+      }
+
+      function thinCrisp(ctx, size, hour, minute) {
+        const cx = size / 2;
+        const cy = size / 2;
+        const r = size / 2 - 0.5;
+        ctx.clearRect(0, 0, size, size);
+        circle(ctx, cx, cy, r, "#fafafa", "#000", 1);
+        ticks(ctx, cx, cy, r, size <= 16 ? 4 : 12, r * 0.8, r * 0.94, "#000", 1);
+        drawHands(ctx, cx, cy, r, hour, minute, 1, 1, "#000", 0.5, 0.78);
+        circle(ctx, cx, cy, 1, "#000");
+      }
+
+      function blueRimBold(ctx, size, hour, minute) {
+        const cx = size / 2;
+        const cy = size / 2;
+        const r = size / 2 - 0.5;
+        ctx.clearRect(0, 0, size, size);
+        circle(ctx, cx, cy, r, "#fff", "#478cf7", size <= 16 ? 1.5 : Math.max(2, size * 0.08));
+        ticks(ctx, cx, cy, r, 4, r * 0.78, r * 0.93, "#234", size <= 16 ? 1.25 : 2);
+        drawHands(
+          ctx,
+          cx,
+          cy,
+          r,
+          hour,
+          minute,
+          size <= 16 ? 2.4 : size * 0.13,
+          size <= 16 ? 1.4 : size * 0.07,
+          "#111",
+          0.5,
+          0.76
+        );
+        circle(ctx, cx, cy, size <= 16 ? 1.5 : size * 0.05, "#478cf7");
+      }
+
+      const VARIANTS = [
+        {
+          id: "current",
+          name: "Current (in the extension now)",
+          note: "Light face, blue rim, four ticks, thin hands, orange hub. There is a 1–2 pixel gap around the disk.",
+          draw: current,
+        },
+        {
+          id: "fill-contrast",
+          name: "Fill + high contrast",
+          note: "Uses almost the whole 16px square. White face, black rim, thicker hour hand, black hub. Easier to read at toolbar size.",
+          draw: fillContrast,
+        },
+        {
+          id: "dark",
+          name: "Dark face, white hands",
+          note: "Black disk filling the square. White hands. Often clearer on a light Brave toolbar.",
+          draw: darkFace,
+        },
+        {
+          id: "fat",
+          name: "Fat hands, no ticks",
+          note: "No tick marks, so the hands keep every pixel. Hour hand is the thickest of the set.",
+          draw: fatHandsNoTicks,
+        },
+        {
+          id: "thin",
+          name: "Thin 1px",
+          note: "One-pixel hands and rim. Clean when enlarged, often disappears at 16px.",
+          draw: thinCrisp,
+        },
+        {
+          id: "blue-bold",
+          name: "Blue rim, bold hands",
+          note: "Keeps the extension blue, but fills the square and thickens the hands. Four ticks only.",
+          draw: blueRimBold,
+        },
+      ];
+
+      function drawToCanvas(canvas, draw, size, hour, minute) {
+        canvas.width = size;
+        canvas.height = size;
+        const ctx = canvas.getContext("2d");
+        ctx.imageSmoothingEnabled = false;
+        draw(ctx, size, hour, minute);
+      }
+
+      function magnified(source, scale) {
+        const out = document.createElement("canvas");
+        out.className = "mag";
+        out.width = source.width * scale;
+        out.height = source.height * scale;
+        const ctx = out.getContext("2d");
+        ctx.imageSmoothingEnabled = false;
+        ctx.drawImage(source, 0, 0, out.width, out.height);
+        return out;
+      }
+
+      function nowParts() {
+        const d = new Date();
+        return { h: d.getHours(), m: d.getMinutes() };
+      }
+
+      const board = document.getElementById("board");
+      const sample = { h: 10, m: 8 };
+
+      VARIANTS.forEach((variant) => {
+        const section = document.createElement("section");
+        section.className = "variant";
+        section.innerHTML = "<h2>" + variant.name + "</h2><p>" + variant.note + "</p>";
+        const row = document.createElement("div");
+        row.className = "row";
+        SIZES.forEach((size) => {
+          const cell = document.createElement("div");
+          cell.className = "cell";
+          const actual = document.createElement("canvas");
+          actual.className = "actual";
+          drawToCanvas(actual, variant.draw, size, sample.h, sample.m);
+          actual.style.width = size + "px";
+          actual.style.height = size + "px";
+          const magWrap = document.createElement("div");
+          magWrap.className = "mag-wrap";
+          magWrap.appendChild(magnified(actual, 8));
+          cell.append(actual, magWrap);
+          const label = document.createElement("div");
+          label.className = "label";
+          label.textContent = size + "px actual, then ×8";
+          cell.appendChild(label);
+          row.appendChild(cell);
+        });
+        const times = document.createElement("div");
+        times.className = "times";
+        TIMES.forEach((t) => {
+          const c = document.createElement("canvas");
+          drawToCanvas(c, variant.draw, 16, t.h, t.m);
+          c.style.width = "16px";
+          c.style.height = "16px";
+          c.title = t.label;
+          times.appendChild(c);
+        });
+        section.append(row, times);
+        board.appendChild(section);
+      });
+
+      function paintLive() {
+        const { h, m } = nowParts();
+        document.querySelectorAll("canvas.live").forEach((canvas) => {
+          drawToCanvas(canvas, current, 16, h, m);
+        });
+      }
+      paintLive();
+      setInterval(paintLive, 1000);
+    </script>
+  </body>
+</html>

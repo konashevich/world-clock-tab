@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>World Clock Tab — branding icon mockup</title>
+    <style>
+      :root {
+        --bg: #161616;
+        --ink: #eee;
+        --muted: #9a9a9a;
+        --blue: #478cf7;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        font-family: "Segoe UI", Roboto, sans-serif;
+        background: var(--bg);
+        color: var(--ink);
+        padding: 28px 32px 64px;
+      }
+      h1 {
+        margin: 0 0 8px;
+        font-size: 22px;
+        font-weight: 600;
+      }
+      .lead {
+        margin: 0 0 28px;
+        color: var(--muted);
+        max-width: 760px;
+        line-height: 1.5;
+      }
+      h2 {
+        margin: 0 0 6px;
+        font-size: 16px;
+      }
+      .note {
+        margin: 0 0 16px;
+        color: var(--muted);
+        font-size: 13px;
+        line-height: 1.45;
+        max-width: 760px;
+      }
+      .section {
+        margin-bottom: 36px;
+      }
+      .row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 22px;
+        align-items: flex-end;
+      }
+      .cell {
+        text-align: center;
+      }
+      .label {
+        font-size: 11px;
+        color: var(--muted);
+        margin-top: 6px;
+      }
+      .icon {
+        display: block;
+        image-rendering: auto;
+      }
+      .icon.pixel {
+        image-rendering: pixelated;
+        image-rendering: crisp-edges;
+      }
+      .mag-wrap {
+        display: inline-block;
+        background: #2a2a2a;
+        padding: 6px;
+        border-radius: 6px;
+        margin-top: 8px;
+      }
+      .chip {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 8px 14px;
+        border-radius: 8px;
+        width: max-content;
+      }
+      .chip.light {
+        background: #dfe3ea;
+        color: #333;
+      }
+      .chip.dark {
+        background: #2b2f36;
+        color: #ddd;
+      }
+      .chip span {
+        font-size: 12px;
+      }
+
+      /* Fake Brave / Chrome chrome */
+      .chrome {
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 0 0 1px #000;
+        margin-bottom: 18px;
+        max-width: 920px;
+      }
+      .tabs {
+        display: flex;
+        align-items: flex-end;
+        gap: 6px;
+        padding: 8px 10px 0;
+        background: #c5cad3;
+        min-height: 38px;
+      }
+      .tabs.dark {
+        background: #1f2329;
+      }
+      .tab {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        background: #e8eaee;
+        border-radius: 8px 8px 0 0;
+        padding: 7px 12px 8px;
+        min-width: 180px;
+        font-size: 12px;
+        color: #222;
+      }
+      .tabs.dark .tab {
+        background: #2b2f36;
+        color: #ddd;
+      }
+      .tab.idle {
+        background: #d3d7de;
+        opacity: 0.85;
+        min-width: 120px;
+      }
+      .tabs.dark .tab.idle {
+        background: #252a31;
+      }
+      .toolbar-bar {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 6px 12px;
+        background: #e8eaee;
+      }
+      .tabs.dark + .toolbar-bar {
+        background: #2b2f36;
+      }
+      .omnibox {
+        flex: 1;
+        height: 28px;
+        border-radius: 14px;
+        background: #fff;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 0 12px;
+        font-size: 12px;
+        color: #555;
+      }
+      .tabs.dark + .toolbar-bar .omnibox {
+        background: #1b1e24;
+        color: #bbb;
+      }
+      .ext-icons {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .ghost {
+        width: 16px;
+        height: 16px;
+        border-radius: 3px;
+        background: #9aa3b0;
+        opacity: 0.45;
+      }
+
+      .ext-page {
+        background: #202124;
+        padding: 18px 20px 22px;
+        max-width: 920px;
+        border-radius: 10px;
+      }
+      .ext-card {
+        display: grid;
+        grid-template-columns: 48px 1fr;
+        gap: 14px;
+        align-items: center;
+        background: #292a2d;
+        padding: 14px 16px;
+        border-radius: 10px;
+      }
+      .ext-card h3 {
+        margin: 0 0 4px;
+        font-size: 14px;
+        font-weight: 500;
+      }
+      .ext-card p {
+        margin: 0;
+        font-size: 12px;
+        color: #9aa0a6;
+      }
+
+      .store {
+        display: grid;
+        grid-template-columns: 128px 1fr;
+        gap: 18px;
+        align-items: center;
+        background: #fff;
+        color: #202124;
+        padding: 20px;
+        border-radius: 12px;
+        max-width: 640px;
+      }
+      .store h3 {
+        margin: 0 0 6px;
+        font-size: 22px;
+      }
+      .store p {
+        margin: 0;
+        color: #5f6368;
+        font-size: 13px;
+        line-height: 1.4;
+      }
+
+      .compare {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        gap: 16px;
+      }
+      .card {
+        background: #111;
+        border-radius: 12px;
+        padding: 16px;
+      }
+      .sizes {
+        display: flex;
+        align-items: flex-end;
+        gap: 16px;
+        flex-wrap: wrap;
+      }
+      .on-photo {
+        width: 220px;
+        height: 140px;
+        border-radius: 10px;
+        background: linear-gradient(#7eb6ff, #478cf7);
+        display: grid;
+        place-items: center;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Branding icon mockup, real sizes</h1>
+    <p class="lead">
+      The live toolbar button stays the analog clock for the selected city. The painted three-city
+      mark is now the static branding in icon16.png through icon128.png: New Tab favicon,
+      chrome://extensions, the Chrome Web Store tile, and the default action icon before the clock
+      paints. Reload the unpacked extension on brave://extensions so Chrome picks up the new files.
+    </p>
+
+    <section class="section">
+      <h2>New Tab favicon (16 CSS pixels)</h2>
+      <p class="note">
+        Brave and Chrome draw the extension icon as the tab favicon on a chrome-extension New Tab
+        page. That bitmap is 16 CSS pixels, often 32 device pixels on a retina display.
+      </p>
+      <div class="chrome">
+        <div class="tabs">
+          <div class="tab">
+            <img class="icon pixel" src="icons/icon16.png?v=1.1.9" width="16" height="16" alt="" />
+            New Tab
+          </div>
+          <div class="tab idle">mail</div>
+        </div>
+        <div class="toolbar-bar">
+          <div class="omnibox">chrome://newtab</div>
+          <div class="ext-icons">
+            <div class="ghost"></div>
+            <img class="icon pixel" src="icons/icon16.png?v=1.1.9" width="16" height="16" alt="" />
+            <div class="ghost"></div>
+          </div>
+        </div>
+      </div>
+      <div class="chrome">
+        <div class="tabs dark">
+          <div class="tab">
+            <img class="icon pixel" src="icons/icon16.png?v=1.1.9" width="16" height="16" alt="" />
+            New Tab
+          </div>
+          <div class="tab idle">mail</div>
+        </div>
+        <div class="toolbar-bar">
+          <div class="omnibox">chrome://newtab</div>
+          <div class="ext-icons">
+            <div class="ghost"></div>
+            <img class="icon pixel" src="icons/icon16.png?v=1.1.9" width="16" height="16" alt="" />
+            <div class="ghost"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>chrome://extensions (48px)</h2>
+      <p class="note">The management page uses the 48px asset. Landmarks should still read here.</p>
+      <div class="ext-page">
+        <div class="ext-card">
+          <img class="icon" src="icons/icon48.png?v=1.1.9" width="48" height="48" alt="" />
+          <div>
+            <h3>World Clock Tab</h3>
+            <p>New Tab vertical city columns with photos. Toolbar analog clock for the selected city.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>Chrome Web Store tile (128px)</h2>
+      <p class="note">The store listing and the install dialog use 128px. This is where the three timezones should be obvious.</p>
+      <div class="store">
+        <img class="icon" src="icons/icon128.png?v=1.1.9" width="128" height="128" alt="" />
+        <div>
+          <h3>World Clock Tab</h3>
+          <p>
+            Three vertical city columns: Sydney at dawn, Kyiv in daylight, London at night. White
+            caption pills match the New Tab overlay.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>Size ladder</h2>
+      <p class="note">
+        Each mark is shown at its true CSS size, then the same pixels enlarged eight times so you
+        can see what survives. The left column is the detailed SVG. The right column is the 16px
+        simplified SVG, scaled up for the larger sizes.
+      </p>
+      <div class="compare">
+        <div class="card">
+          <h2>Detailed three cities</h2>
+          <p class="note">Sydney Opera House, Kyiv gold domes, London night tower.</p>
+          <div class="sizes" id="detailedSizes"></div>
+        </div>
+        <div class="card">
+          <h2>Simplified bars</h2>
+          <p class="note">Gold / product blue / navy, sun, moon, white caption pills.</p>
+          <div class="sizes" id="simpleSizes"></div>
+        </div>
+        <div class="card">
+          <h2>Painted three cities</h2>
+          <p class="note">
+            The generated 1024px art, scaled down. Stronger landmarks than the SVG. At 16px it
+            still collapses; keep the simplified bars for favicon size.
+          </p>
+          <div class="sizes" id="paintedSizes"></div>
+        </div>
+        <div class="card">
+          <h2>Current globe (in the extension now)</h2>
+          <p class="note">Blue globe with a clock face. Does not match the vertical columns.</p>
+          <div class="sizes" id="currentSizes"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>On a city photo, like the New Tab</h2>
+      <p class="note">A 32px mark on a blue sky, the way a selected-slot badge might sit.</p>
+      <div class="on-photo">
+        <img class="icon" src="icons/icon32.png?v=1.1.9" width="32" height="32" alt="" />
+      </div>
+    </section>
+
+    <script>
+      const SIZES = [
+        { px: 16, name: "favicon / toolbar" },
+        { px: 32, name: "retina favicon, Windows" },
+        { px: 48, name: "extensions page" },
+        { px: 128, name: "Web Store" },
+      ];
+
+      function mag(src, size) {
+        const wrap = document.createElement("div");
+        wrap.className = "cell";
+        const img = document.createElement("img");
+        img.className = "icon pixel";
+        img.src = src;
+        img.width = size;
+        img.height = size;
+        img.alt = "";
+        const magWrap = document.createElement("div");
+        magWrap.className = "mag-wrap";
+        const magImg = document.createElement("img");
+        magImg.className = "icon pixel";
+        magImg.src = src;
+        magImg.width = size * 8;
+        magImg.height = size * 8;
+        magImg.alt = "";
+        magWrap.appendChild(magImg);
+        const label = document.createElement("div");
+        label.className = "label";
+        label.textContent = size + "px · " + nameFor(size);
+        wrap.append(img, magWrap, label);
+        return wrap;
+      }
+
+      function nameFor(size) {
+        const hit = SIZES.find((s) => s.px === size);
+        return hit ? hit.name : size + "px";
+      }
+
+      const LADDERS = {
+        detailedSizes: {
+          16: "icons/mock/svg-16.png",
+          32: "icons/mock/svg-32.png",
+          48: "icons/mock/svg-48.png",
+          128: "icons/mock/svg-128.png",
+        },
+        simpleSizes: {
+          16: "icons/mock/svg16-16.png",
+          32: "icons/mock/svg16-32.png",
+          48: "icons/mock/svg16-48.png",
+          128: "icons/mock/svg16-128.png",
+        },
+        paintedSizes: {
+          16: "icons/icon16.png?v=1.1.9",
+          32: "icons/icon32.png?v=1.1.9",
+          48: "icons/icon48.png?v=1.1.9",
+          128: "icons/icon128.png?v=1.1.9",
+        },
+        currentSizes: {
+          16: "icons/icon.svg",
+          32: "icons/icon.svg",
+          48: "icons/icon.svg",
+          128: "icons/icon.svg",
+        },
+      };
+
+      SIZES.forEach((s) => {
+        Object.keys(LADDERS).forEach((id) => {
+          document.getElementById(id).appendChild(mag(LADDERS[id][s.px], s.px));
+        });
+      });
+    </script>
+  </body>
+</html>
