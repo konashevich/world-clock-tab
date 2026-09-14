@@ -42,7 +42,9 @@ Publication assets and dashboard copy live in [`store/`](store/). Run `./scripts
 
 **Privacy policy:** https://konashevich.github.io/world-clock-tab/privacy-policy.html
 
-See [`store/CHECKLIST.md`](store/CHECKLIST.md) for what is ready and what you still need (developer account, YouTube link for the demo video).
+**Promotional video:** https://youtu.be/D7P-_ZZLcUg
+
+See [`store/CHECKLIST.md`](store/CHECKLIST.md) for what is ready and what you still need (developer account, dashboard submission).
 
 ## License
 

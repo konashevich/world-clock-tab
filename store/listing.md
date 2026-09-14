@@ -86,13 +86,11 @@ Use at most five. Prefer the first four if you want a mix of clean UI and annota
 
 ## Promotional video
 
-The store accepts a **YouTube URL only** (Public or Unlisted; Private will not embed).
+Paste this into **Promotional video** in the dashboard:
 
-1. Upload `screenshots/slides/World Clock Tab.mp4` to YouTube (Unlisted is fine).
-2. Suggested title: `World Clock Tab — Chrome extension demo`
-3. Paste the YouTube link into **Promotional video** in the dashboard.
+**https://youtu.be/D7P-_ZZLcUg**
 
-Local file: 1920×1080, ~47 seconds, H.264 + AAC — suitable for YouTube as-is.
+(Also: https://www.youtube.com/watch?v=D7P-_ZZLcUg)
 
 ## Suggested YouTube description
 

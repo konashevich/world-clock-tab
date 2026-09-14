@@ -13,7 +13,7 @@
 | Listing copy (short + detailed) | Ready | `store/listing.md` |
 | Privacy policy text | **Live** | https://konashevich.github.io/world-clock-tab/privacy-policy.html |
 | Privacy dashboard answers | Ready | `store/dashboard-privacy-fields.md` |
-| Demo video file | Ready | `screenshots/slides/World Clock Tab.mp4` (1920×1080, ~47 s) |
+| Promotional video (YouTube) | **Live** | https://youtu.be/D7P-_ZZLcUg |
 | ZIP packaging script | Ready | `scripts/package-webstore.sh` |
 
 ## You still need to do manually
@@ -22,7 +22,7 @@
 
 2. **Privacy policy URL** — **Done.** Paste this into the dashboard: `https://konashevich.github.io/world-clock-tab/privacy-policy.html`
 
-3. **YouTube video** — Upload `screenshots/slides/World Clock Tab.mp4` to YouTube (Unlisted is fine). The store does **not** accept a direct MP4 upload; paste the YouTube link only.
+3. **Promotional video** — **Done.** Paste https://youtu.be/D7P-_ZZLcUg into **Promotional video**.
 
 4. **Create the store item** — Dashboard → New item → upload the ZIP from `scripts/package-webstore.sh`.
 
