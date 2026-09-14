@@ -54,11 +54,17 @@ English
 
 ## Homepage URL (optional)
 
-Leave blank until you publish a project page, or use your Git repository URL once it is public.
+https://github.com/konashevich/world-clock-tab
 
 ## Support URL (optional)
 
-Same as homepage, or a GitHub Issues URL if you enable issues on the repository.
+https://github.com/konashevich/world-clock-tab/issues
+
+(Enable Issues on the repository in GitHub settings if the link should work.)
+
+## Privacy policy URL
+
+https://konashevich.github.io/world-clock-tab/privacy-policy.html
 
 ## Screenshots (upload order)
 

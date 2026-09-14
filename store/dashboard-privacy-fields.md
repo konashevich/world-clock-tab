@@ -56,11 +56,10 @@ If the form separates “photos/videos” or “user-generated content,” you m
 
 ## Privacy policy URL
 
-You must host `store/privacy-policy.html` at a public HTTPS URL and paste that URL here and under **Account → Privacy policy** if required.
+**Privacy policy URL (live):**
 
-Examples once you have hosting:
+```
+https://konashevich.github.io/world-clock-tab/privacy-policy.html
+```
 
-- GitHub Pages: `https://<user>.github.io/world-clock-tab/privacy-policy.html`
-- Your own site: `https://example.com/world-clock-tab/privacy`
-
-Until that URL is live, submission will be blocked on the privacy policy field.
+Paste that URL here and under **Account → Privacy policy** if the dashboard asks for it separately.

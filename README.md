@@ -40,7 +40,9 @@ City photos are requested from `en.wikipedia.org` and Wikimedia upload hosts. Yo
 
 Publication assets and dashboard copy live in [`store/`](store/). Run `./scripts/package-webstore.sh` to build `dist/world-clock-tab-<version>.zip` for upload.
 
-See [`store/CHECKLIST.md`](store/CHECKLIST.md) for what is ready and what you still need (developer account, hosted privacy policy URL, YouTube link for the demo video).
+**Privacy policy:** https://konashevich.github.io/world-clock-tab/privacy-policy.html
+
+See [`store/CHECKLIST.md`](store/CHECKLIST.md) for what is ready and what you still need (developer account, YouTube link for the demo video).
 
 ## License
 
