@@ -241,6 +241,28 @@ html.newtab .caption .zone {
   line-height: 1;
 }
 
+.slot.panning {
+  cursor: grab;
+  user-select: none;
+  touch-action: none;
+}
+
+.slot.panning.dragging {
+  cursor: grabbing;
+}
+
+.slot.panning .caption {
+  pointer-events: none;
+}
+
+.slot-actions > button.pan-btn.active {
+  box-shadow: 0 0 0 2px var(--blue);
+}
+
+.slot-actions > .reset-pos-btn[hidden] {
+  display: none;
+}
+
 .reorder-btn {
   position: absolute;
   top: 50%;

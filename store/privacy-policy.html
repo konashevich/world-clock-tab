@@ -14,7 +14,7 @@
 </head>
 <body>
   <h1>Privacy Policy — World Clock Tab</h1>
-  <p><strong>Last updated:</strong> 14 September 2026</p>
+  <p><strong>Last updated:</strong> 16 September 2026</p>
   <p><strong>Publisher:</strong> Oleksii Konashevych</p>
   <p><strong>Contact:</strong> <a href="mailto:konoshevich@gmail.com">konoshevich@gmail.com</a></p>
 
@@ -22,25 +22,26 @@
   <p>World Clock Tab is a browser extension for Chrome and Brave. It replaces the New Tab page with a world clock and provides a toolbar popup for settings. This policy describes what data the extension handles and how.</p>
 
   <h2>Data stored on your device</h2>
-  <p>The extension stores the following locally in your browser using Chrome extension storage:</p>
+  <p>The extension stores the following locally on your device. It is not sent to a first-party server.</p>
   <ul>
-    <li>Your list of cities (display names and IANA time zones)</li>
+    <li>Your list of cities (display names and IANA time zones) in <code>chrome.storage.sync</code></li>
     <li>Which city is selected for the toolbar analog clock</li>
     <li>Clock preferences (24-hour format, show seconds)</li>
-    <li>Cached Wikipedia photo metadata and image data</li>
-    <li>Optional custom photo overrides you choose to upload</li>
+    <li>Wikipedia photo lookup metadata (article titles and image URLs) in <code>chrome.storage.local</code></li>
+    <li>Wikimedia image files for your assigned cities in the browser Cache Storage, so New Tab columns can appear without downloading those files again</li>
+    <li>Optional custom photo overrides you choose to upload, stored locally in <code>chrome.storage.local</code></li>
   </ul>
   <p>This data stays on your device. World Clock Tab does not operate a backend server and does not receive copies of your city list or settings.</p>
 
   <h2>Network requests</h2>
-  <p>When you add a city or refresh a Wikipedia photo, the extension may contact <code>en.wikipedia.org</code>, <code>upload.wikimedia.org</code>, and <code>thumb.wikimedia.org</code> to fetch public article summaries and images. These requests use city or article names only. They do not include your identity, browsing history, or extension settings beyond what is required for the lookup.</p>
+  <p>When you add a city, restore a Wikipedia photo, or start the browser with assigned photos that are not already in Cache Storage, the extension may contact <code>en.wikipedia.org</code>, <code>upload.wikimedia.org</code>, and <code>thumb.wikimedia.org</code> to fetch public article summaries and images. These requests use city or article names only. They do not include your identity, browsing history, or extension settings beyond what is required for the lookup. The minute toolbar-clock alarm does not download photos.</p>
 
   <h2>Data we do not collect</h2>
   <p>World Clock Tab does not sell or share personal data, use analytics or advertising SDKs, collect account information, or track websites you visit outside the extension’s own pages.</p>
 
   <h2>Permissions</h2>
   <ul>
-    <li><strong>Storage</strong> — save your cities, settings, and photo cache locally</li>
+    <li><strong>Storage</strong> — save your cities, settings, and photo lookup metadata locally</li>
     <li><strong>Alarms</strong> — update the toolbar analog clock each minute</li>
     <li><strong>Host access to Wikipedia/Wikimedia</strong> — fetch public city photos and article summaries</li>
   </ul>

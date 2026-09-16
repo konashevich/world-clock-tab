@@ -12,6 +12,7 @@ import {
 } from "./cities.js";
 import { zoneTimeParts } from "./time.js";
 import { loadPhotoCache, resolveAutoPhoto, resizeUserPhoto } from "./photos.js";
+import { canonicalWikiUrl, displayUrl, forgetUrl, pruneToUrls, wikiUrlsFromPhotoMap } from "./image-cache.js";
 
 const isHomeTab = document.documentElement.classList.contains("newtab");
 const isExtensionPanel = !isHomeTab;
@@ -37,12 +38,22 @@ let state = {
   showSeconds: false,
 };
 let photos = {};
+const slotBlobs = new Map();
+const applySeq = new Map();
 let pendingPhotoId = null;
 let resolvedAdd = null;
 let tickTimer = null;
 let storageWasEmpty = false;
 let applyingRemote = false;
 let pendingStateWrites = 0;
+let pendingPhotoWrites = 0;
+let photoWriteChain = Promise.resolve();
+let listGen = 0;
+let panningId = null;
+let panDrag = null;
+let panDragSeq = 0;
+let skippedPhotoRefresh = false;
+const imageSizeCache = new Map();
 
 function hasChromeStorage() {
   return Boolean(globalThis.chrome && chrome.storage && chrome.storage.sync);
@@ -99,16 +110,93 @@ function saveState() {
   );
 }
 
+function wikiUrlFromRec(rec) {
+  return rec && rec.source === "auto" && rec.url ? rec.url : null;
+}
+
+function rememberedWikiUrl(rec) {
+  if (!rec) return null;
+  return wikiUrlFromRec(rec) || (rec.source === "user" && rec.wikiUrl) || null;
+}
+
+function clampPct(n, fallback) {
+  const v = typeof n === "number" ? n : Number(n);
+  if (!Number.isFinite(v)) return fallback;
+  return Math.round(Math.min(100, Math.max(0, v)) * 100) / 100;
+}
+
+function readPos(raw) {
+  if (!raw || typeof raw !== "object") return { x: 50, y: 50 };
+  return { x: clampPct(raw.x, 50), y: clampPct(raw.y, 50) };
+}
+
+function isCenterPos(pos) {
+  const p = readPos(pos);
+  return p.x === 50 && p.y === 50;
+}
+
+function posCss(pos) {
+  const p = readPos(pos);
+  if (isCenterPos(p)) return "center";
+  return p.x + "% " + p.y + "%";
+}
+
+function posFromCss(css, fallback) {
+  const t = String(css || "").trim().toLowerCase();
+  if (!t) return readPos(fallback);
+  if (t === "center" || t === "center center") return { x: 50, y: 50 };
+  const parts = t.split(/\s+/);
+  if (parts.length >= 2) {
+    const x = parseFloat(parts[0]);
+    const y = parseFloat(parts[1]);
+    if (Number.isFinite(x) && Number.isFinite(y)) return { x: clampPct(x, 50), y: clampPct(y, 50) };
+  }
+  return readPos(fallback);
+}
+
+function attachPos(toStore, rec, previous) {
+  if (!toStore) return toStore;
+  if (rec && Object.prototype.hasOwnProperty.call(rec, "pos")) {
+    if (rec.pos == null || isCenterPos(rec.pos)) delete toStore.pos;
+    else toStore.pos = readPos(rec.pos);
+    return toStore;
+  }
+  if (previous && previous.pos && !isCenterPos(previous.pos)) toStore.pos = readPos(previous.pos);
+  else delete toStore.pos;
+  return toStore;
+}
+
+function beginPhotoWrite() {
+  pendingPhotoWrites += 1;
+}
+
+function finishPhotoWrite() {
+  pendingPhotoWrites = Math.max(0, pendingPhotoWrites - 1);
+}
+
 function prunePhotos() {
   const ids = new Set(state.cities.map((city) => city.id));
+  const dropped = [];
   let changed = false;
   for (const id of Object.keys(photos)) {
     if (!ids.has(id)) {
+      const url = rememberedWikiUrl(photos[id]);
+      if (url) dropped.push(url);
       delete photos[id];
       changed = true;
     }
   }
-  if (changed && hasChromeStorage()) chrome.storage.local.set({ photos });
+  if (changed && hasChromeStorage()) {
+    beginPhotoWrite();
+    chrome.storage.local.set({ photos }, () => finishPhotoWrite());
+  }
+  const kept = wikiUrlsFromPhotoMap(photos);
+  for (const url of dropped) {
+    if (!kept.includes(canonicalWikiUrl(url))) forgetUrl(url);
+  }
+  pruneToUrls(kept, {
+    allowEmptyWipe: Object.keys(photos).length > 0 && !kept.length,
+  });
 }
 
 function refreshAddButton() {
@@ -118,6 +206,16 @@ function refreshAddButton() {
 }
 
 function mergePhotoRecord(id, rec) {
+  const run = () => mergePhotoRecordNow(id, rec);
+  const next = photoWriteChain.then(run, run);
+  photoWriteChain = next.then(
+    () => undefined,
+    () => undefined
+  );
+  return next;
+}
+
+function mergePhotoRecordNow(id, rec) {
   return new Promise((resolve) => {
     if (rec && rec.source === "auto" && photos[id] && photos[id].source === "user") {
       resolve(false);
@@ -126,25 +224,50 @@ function mergePhotoRecord(id, rec) {
     chrome.storage.local.get("photos", (raw) => {
       const stored = isPhotoMap(raw.photos) ? raw.photos : {};
       const next = { ...stored, ...photos };
-      if (rec && rec.source === "auto" && next[id] && next[id].source === "user") {
+      if (
+        rec &&
+        rec.source === "auto" &&
+        next[id] &&
+        next[id].source === "user" &&
+        photos[id] &&
+        photos[id].source === "user"
+      ) {
         photos[id] = next[id];
         resolve(false);
         return;
       }
-      if (rec === null) {
+      const previous = next[id] || stored[id];
+      const previousUrl = rememberedWikiUrl(previous);
+      let toStore = rec;
+      if (rec && rec.source === "user") {
+        toStore = {
+          source: "user",
+          url: rec.url,
+          wikiUrl: rec.wikiUrl || previousUrl || undefined,
+        };
+        if (!toStore.wikiUrl) delete toStore.wikiUrl;
+      } else if (rec) {
+        toStore = { source: rec.source, url: rec.url };
+      }
+      if (toStore) attachPos(toStore, rec, previous);
+      if (toStore === null) {
         delete next[id];
         delete photos[id];
       } else {
-        next[id] = rec;
-        photos[id] = rec;
+        next[id] = toStore;
+        photos[id] = toStore;
       }
+      beginPhotoWrite();
       chrome.storage.local.set({ photos: next }, () => {
+        finishPhotoWrite();
         if (chrome.runtime.lastError) {
           if (stored[id]) photos[id] = stored[id];
           else delete photos[id];
           resolve(false);
           return;
         }
+        const kept = wikiUrlsFromPhotoMap(next);
+        if (previousUrl && !kept.includes(canonicalWikiUrl(previousUrl))) forgetUrl(previousUrl);
         resolve(true);
       });
     });
@@ -159,14 +282,301 @@ function slotSelector(id) {
   return '.slot[data-id="' + CSS.escape(id) + '"]';
 }
 
-function applyPhotoToSlot(slot, rec) {
+function revokeSlotBlob(id) {
+  const blobUrl = slotBlobs.get(id);
+  if (!blobUrl) return;
+  URL.revokeObjectURL(blobUrl);
+  slotBlobs.delete(id);
+}
+
+function revokeAllSlotBlobs() {
+  for (const blobUrl of slotBlobs.values()) {
+    URL.revokeObjectURL(blobUrl);
+  }
+  slotBlobs.clear();
+}
+
+function paintSlotBackground(slot, url, title, pos) {
+  const id = slot.dataset.id;
+  const keepPan = panningId === id && slot.classList.contains("panning");
+  const livePos = slot.style.backgroundPosition;
+  slot.style.backgroundImage = url ? "url(" + JSON.stringify(url) + ")" : "";
+  slot.style.backgroundPosition = keepPan && livePos ? livePos : url ? posCss(pos) : "";
+  slot.title = title || "";
+  const panBtn = slot.querySelector(".pan-btn");
+  if (panBtn) panBtn.disabled = !url;
+  if (!url && panningId === id) exitPanMode();
+}
+
+function imageUrlFromSlot(slot) {
+  const bg = slot.style.backgroundImage;
+  if (!bg || bg === "none") return "";
+  const inner = bg.replace(/^url\(/, "").replace(/\)$/, "");
+  try {
+    return JSON.parse(inner);
+  } catch (_) {
+    return inner.replace(/^["']|["']$/g, "");
+  }
+}
+
+function loadImageSize(url, cacheKey) {
+  if (!url) return Promise.resolve(null);
+  const key = cacheKey || url;
+  if (imageSizeCache.has(key)) return Promise.resolve(imageSizeCache.get(key));
+  if (key !== url && imageSizeCache.has(url)) return Promise.resolve(imageSizeCache.get(url));
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => {
+      const size = { w: img.naturalWidth, h: img.naturalHeight };
+      if (size.w && size.h) {
+        imageSizeCache.set(key, size);
+        if (key !== url) imageSizeCache.set(url, size);
+      }
+      resolve(size.w ? size : null);
+    };
+    img.onerror = () => resolve(null);
+    img.src = url;
+  });
+}
+
+function coverOverflow(slotW, slotH, imgW, imgH) {
+  if (!imgW || !imgH || !slotW || !slotH) return { ox: 0, oy: 0 };
+  const scale = Math.max(slotW / imgW, slotH / imgH);
+  return {
+    ox: Math.max(0, imgW * scale - slotW),
+    oy: Math.max(0, imgH * scale - slotH),
+  };
+}
+
+function fallbackOverflow(slotW, slotH) {
+  const w = Math.max(slotW, 1);
+  const h = Math.max(slotH, 1);
+  if (h >= w) return { ox: w, oy: 0 };
+  return { ox: 0, oy: h };
+}
+
+function applyPanDrag(slot, drag) {
   if (!slot) return;
-  if (rec && rec.url) {
-    slot.style.backgroundImage = "url(" + JSON.stringify(rec.url) + ")";
-    slot.title = rec.source === "user" ? "Your photo" : "Photo: Wikipedia";
-  } else {
-    slot.style.backgroundImage = "";
-    slot.title = "";
+  const dx = drag.lastX - drag.startX;
+  const dy = drag.lastY - drag.startY;
+  const x = drag.ox > 1 ? clampPct(drag.startPos.x - (dx / drag.ox) * 100, drag.startPos.x) : drag.startPos.x;
+  const y = drag.oy > 1 ? clampPct(drag.startPos.y - (dy / drag.oy) * 100, drag.startPos.y) : drag.startPos.y;
+  drag.current = { x, y };
+  slot.style.backgroundPosition = posCss(drag.current);
+}
+
+function releaseDragPointer(drag) {
+  const slot = listEl.querySelector(slotSelector(drag.id));
+  if (!slot) return;
+  try {
+    slot.releasePointerCapture(drag.pointerId);
+  } catch (_) {
+    /* ignore */
+  }
+  slot.classList.remove("dragging");
+}
+
+function finishActiveDrag(save) {
+  if (!panDrag) return;
+  const drag = panDrag;
+  panDrag = null;
+  releaseDragPointer(drag);
+  if (save !== false && drag.current) savePhotoPos(drag.id, drag.current);
+}
+
+function setPanButtonState(slot, on) {
+  const panBtn = slot && slot.querySelector(".pan-btn");
+  if (!panBtn) return;
+  panBtn.classList.toggle("active", on);
+  panBtn.setAttribute("aria-pressed", on ? "true" : "false");
+}
+
+function exitPanMode() {
+  finishActiveDrag(true);
+  if (!panningId) {
+    flushSkippedPhotoRefresh();
+    return;
+  }
+  const slot = listEl.querySelector(slotSelector(panningId));
+  if (slot) {
+    slot.classList.remove("panning", "dragging");
+    setPanButtonState(slot, false);
+    const resetBtn = slot.querySelector(".reset-pos-btn");
+    if (resetBtn) resetBtn.hidden = true;
+  }
+  panningId = null;
+  flushSkippedPhotoRefresh();
+}
+
+function stopPanForCity(id) {
+  if (panDrag && panDrag.id === id) finishActiveDrag(false);
+  if (panningId === id) exitPanMode();
+}
+
+function flushSkippedPhotoRefresh() {
+  if (!skippedPhotoRefresh) return;
+  if (panningId || panDrag) return;
+  skippedPhotoRefresh = false;
+  photoWriteChain.then(() => {
+    if (panningId || panDrag) {
+      skippedPhotoRefresh = true;
+      return;
+    }
+    refreshFromStorage();
+  });
+}
+
+function enterPanMode(id) {
+  if (panningId === id) {
+    exitPanMode();
+    return;
+  }
+  exitPanMode();
+  const rec = photos[id];
+  if (!rec || !rec.url) return;
+  const slot = listEl.querySelector(slotSelector(id));
+  if (!slot || !imageUrlFromSlot(slot)) return;
+  panningId = id;
+  slot.classList.add("panning");
+  setPanButtonState(slot, true);
+  const resetBtn = slot.querySelector(".reset-pos-btn");
+  if (resetBtn) resetBtn.hidden = false;
+}
+
+function savePhotoPos(id, pos) {
+  const rec = photos[id];
+  if (!rec || !rec.url) return;
+  const next = { source: rec.source, url: rec.url, pos: isCenterPos(pos) ? null : readPos(pos) };
+  if (rec.source === "user" && rec.wikiUrl) next.wikiUrl = rec.wikiUrl;
+  mergePhotoRecord(id, next);
+}
+
+function resetPhotoPos(id) {
+  finishActiveDrag(false);
+  const rec = photos[id];
+  if (!rec || !rec.url) return;
+  const slot = listEl.querySelector(slotSelector(id));
+  if (slot) slot.style.backgroundPosition = "center";
+  const next = { source: rec.source, url: rec.url, pos: null };
+  if (rec.source === "user" && rec.wikiUrl) next.wikiUrl = rec.wikiUrl;
+  mergePhotoRecord(id, next);
+  exitPanMode();
+}
+
+function startPanDrag(slot, id, ev) {
+  const rec = photos[id];
+  if (!rec || !rec.url) return;
+  const seq = ++panDragSeq;
+  const rect = slot.getBoundingClientRect();
+  const display = imageUrlFromSlot(slot);
+  const sizeKey = rec.url || display;
+  const cached = imageSizeCache.get(sizeKey) || imageSizeCache.get(display);
+  const overflow = cached
+    ? coverOverflow(rect.width, rect.height, cached.w, cached.h)
+    : fallbackOverflow(rect.width, rect.height);
+  panDrag = {
+    seq,
+    id,
+    pointerId: ev.pointerId,
+    startX: ev.clientX,
+    startY: ev.clientY,
+    lastX: ev.clientX,
+    lastY: ev.clientY,
+    startPos: posFromCss(slot.style.backgroundPosition, rec.pos),
+    ox: overflow.ox,
+    oy: overflow.oy,
+    ready: true,
+  };
+  slot.classList.add("dragging");
+  try {
+    slot.setPointerCapture(ev.pointerId);
+  } catch (_) {
+    /* ignore */
+  }
+  if (cached) return;
+  loadImageSize(display, sizeKey).then((size) => {
+    if (!panDrag || panDrag.seq !== seq) return;
+    if (size) {
+      const next = coverOverflow(rect.width, rect.height, size.w, size.h);
+      panDrag.ox = next.ox;
+      panDrag.oy = next.oy;
+    }
+    applyPanDrag(slot, panDrag);
+  });
+}
+
+function movePanDrag(slot, ev) {
+  if (!panDrag || !slot || panDrag.id !== slot.dataset.id) return;
+  if (ev.pointerId !== panDrag.pointerId) return;
+  panDrag.lastX = ev.clientX;
+  panDrag.lastY = ev.clientY;
+  if (!panDrag.ready) return;
+  applyPanDrag(slot, panDrag);
+}
+
+function endPanDrag(slot, ev) {
+  if (!panDrag) return;
+  if (slot && panDrag.id !== slot.dataset.id) return;
+  if (ev && ev.pointerId !== panDrag.pointerId) return;
+  finishActiveDrag(true);
+}
+
+function panChromeTarget(target) {
+  return Boolean(
+    target && target.closest && target.closest(".slot-actions, .reorder-btn, .toolbar-clock-badge")
+  );
+}
+
+async function applyPhotoToSlot(slot, rec) {
+  if (!slot) return;
+  const id = slot.dataset.id;
+  const gen = listGen;
+  const seq = (applySeq.get(id) || 0) + 1;
+  applySeq.set(id, seq);
+  const stillCurrent = () =>
+    listGen === gen && applySeq.get(id) === seq && slot.dataset.id === id;
+  const dropDisplay = (display) => {
+    if (typeof display === "string" && display.startsWith("blob:")) URL.revokeObjectURL(display);
+  };
+  try {
+    if (!rec || !rec.url) {
+      if (!stillCurrent()) return;
+      revokeSlotBlob(id);
+      paintSlotBackground(slot, "", "");
+      return;
+    }
+    if (rec.source === "user") {
+      if (!stillCurrent()) return;
+      revokeSlotBlob(id);
+      paintSlotBackground(slot, rec.url, "Your photo", rec.pos || (photos[id] && photos[id].pos));
+      return;
+    }
+    const display = await displayUrl(rec.url);
+    if (!stillCurrent()) {
+      dropDisplay(display);
+      return;
+    }
+    const current = photos[id];
+    if (!current || current.source !== "auto" || current.url !== rec.url) {
+      dropDisplay(display);
+      return;
+    }
+    revokeSlotBlob(id);
+    if (typeof display === "string" && display.startsWith("blob:")) slotBlobs.set(id, display);
+    paintSlotBackground(slot, display, "Photo: Wikipedia", current.pos);
+  } catch (_) {
+    if (!stillCurrent()) return;
+    if (
+      rec &&
+      rec.source === "auto" &&
+      rec.url &&
+      photos[id] &&
+      photos[id].source === "auto" &&
+      photos[id].url === rec.url
+    ) {
+      revokeSlotBlob(id);
+      paintSlotBackground(slot, rec.url, "Photo: Wikipedia", photos[id].pos);
+    }
   }
 }
 
@@ -222,19 +632,48 @@ function fetchAutoPhoto(city) {
         if (!wrote) return;
         if (!state.cities.some((c) => c.id === city.id)) return;
         const live = listEl.querySelector(slotSelector(city.id));
-        applyPhotoToSlot(live, { source: "auto", url: photo.url });
+        applyPhotoToSlot(live, photos[city.id]);
       });
     })
     .catch(() => {});
 }
 
 function restoreWikipediaPhoto(city) {
-  delete photos[city.id];
-  const live = listEl.querySelector(slotSelector(city.id));
-  applyPhotoToSlot(live, null);
-  const btn = live && live.querySelector(".photo-btn");
-  if (btn) btn.title = "Use my photo";
-  mergePhotoRecord(city.id, null).then(() => fetchAutoPhoto(city));
+  stopPanForCity(city.id);
+  const remembered = rememberedWikiUrl(photos[city.id]);
+  const cityRef = city;
+  const run = () => {
+    if (!state.cities.some((c) => c.id === cityRef.id)) return Promise.resolve(false);
+    delete photos[cityRef.id];
+    const live = listEl.querySelector(slotSelector(cityRef.id));
+    applyPhotoToSlot(live, null);
+    const btn = live && live.querySelector(".photo-btn");
+    if (btn) btn.title = "Use my photo";
+    if (remembered) {
+      return mergePhotoRecordNow(cityRef.id, {
+        source: "auto",
+        url: remembered,
+        pos: null,
+      }).then((wrote) => {
+        if (!wrote) {
+          fetchAutoPhoto(cityRef);
+          return false;
+        }
+        const slot = listEl.querySelector(slotSelector(cityRef.id));
+        applyPhotoToSlot(slot, photos[cityRef.id]);
+        return true;
+      });
+    }
+    return mergePhotoRecordNow(cityRef.id, null).then(() => {
+      fetchAutoPhoto(cityRef);
+      return true;
+    });
+  };
+  const next = photoWriteChain.then(run, run);
+  photoWriteChain = next.then(
+    () => undefined,
+    () => undefined
+  );
 }
 
 function syncReorderControls() {
@@ -268,10 +707,13 @@ function shiftCity(id, delta) {
 }
 
 function renderList() {
+  exitPanMode();
+  listGen += 1;
   document.documentElement.style.setProperty(
     "--city-count",
     String(Math.max(1, state.cities.length))
   );
+  revokeAllSlotBlobs();
   listEl.innerHTML = "";
   for (const [cityIndex, city] of state.cities.entries()) {
     const slot = document.createElement("article");
@@ -291,6 +733,7 @@ function renderList() {
       badge.textContent = "Toolbar clock";
       badge.title = "This city’s analog time is drawn on the browser toolbar.";
       if (city.id !== state.selectedId) badge.hidden = true;
+      badge.addEventListener("pointerdown", (ev) => ev.stopPropagation());
       slot.append(badge);
       const actions = document.createElement("div");
       actions.className = "slot-actions";
@@ -310,6 +753,30 @@ function renderList() {
         pendingPhotoId = city.id;
         photoFile.click();
       });
+      const panBtn = document.createElement("button");
+      panBtn.type = "button";
+      panBtn.className = "pan-btn";
+      panBtn.title = "Move photo";
+      panBtn.setAttribute("aria-label", "Move " + city.name + " photo");
+      panBtn.setAttribute("aria-pressed", "false");
+      panBtn.textContent = "✥";
+      panBtn.disabled = !imageUrlFromSlot(slot);
+      panBtn.addEventListener("click", (ev) => {
+        ev.stopPropagation();
+        if (panBtn.disabled) return;
+        enterPanMode(city.id);
+      });
+      const resetBtn = document.createElement("button");
+      resetBtn.type = "button";
+      resetBtn.className = "reset-pos-btn";
+      resetBtn.title = "Reset photo position";
+      resetBtn.setAttribute("aria-label", "Reset " + city.name + " photo position");
+      resetBtn.textContent = "↺";
+      resetBtn.hidden = true;
+      resetBtn.addEventListener("click", (ev) => {
+        ev.stopPropagation();
+        resetPhotoPos(city.id);
+      });
       const delBtn = document.createElement("button");
       delBtn.type = "button";
       delBtn.title = canRemove(state.cities) ? "Remove city" : "Keep at least one city";
@@ -318,13 +785,19 @@ function renderList() {
       delBtn.addEventListener("click", (ev) => {
         ev.stopPropagation();
         if (!canRemove(state.cities)) return;
+        if (panningId === city.id || (panDrag && panDrag.id === city.id)) {
+          finishActiveDrag(false);
+          exitPanMode();
+        }
         state.cities = state.cities.filter((c) => c.id !== city.id);
         if (state.selectedId === city.id) state.selectedId = state.cities[0].id;
         mergePhotoRecord(city.id, null);
         saveState();
         renderList();
       });
-      actions.append(photoBtn, delBtn);
+      actions.addEventListener("pointerdown", (ev) => ev.stopPropagation());
+      actions.addEventListener("click", (ev) => ev.stopPropagation());
+      actions.append(photoBtn, panBtn, resetBtn, delBtn);
       slot.append(actions);
 
       const leftBtn = document.createElement("button");
@@ -338,6 +811,7 @@ function renderList() {
         ev.stopPropagation();
         shiftCity(city.id, -1);
       });
+      leftBtn.addEventListener("pointerdown", (ev) => ev.stopPropagation());
       const rightBtn = document.createElement("button");
       rightBtn.type = "button";
       rightBtn.className = "reorder-btn reorder-right";
@@ -349,9 +823,31 @@ function renderList() {
         ev.stopPropagation();
         shiftCity(city.id, 1);
       });
+      rightBtn.addEventListener("pointerdown", (ev) => ev.stopPropagation());
       slot.append(leftBtn, rightBtn);
     }
-    slot.addEventListener("click", () => selectCity(city.id));
+    if (isExtensionPanel) {
+      slot.addEventListener("pointerdown", (ev) => {
+        if (panningId !== city.id) return;
+        if (panChromeTarget(ev.target)) return;
+        if (ev.button != null && ev.button !== 0) return;
+        ev.preventDefault();
+        ev.stopPropagation();
+        startPanDrag(slot, city.id, ev);
+      });
+      slot.addEventListener("pointermove", (ev) => movePanDrag(slot, ev));
+      slot.addEventListener("pointerup", (ev) => endPanDrag(slot, ev));
+      slot.addEventListener("pointercancel", (ev) => endPanDrag(slot, ev));
+      slot.addEventListener("lostpointercapture", (ev) => endPanDrag(slot, ev));
+    }
+    slot.addEventListener("click", (ev) => {
+      if (panningId === city.id) {
+        ev.stopPropagation();
+        return;
+      }
+      if (panningId) exitPanMode();
+      selectCity(city.id);
+    });
     listEl.appendChild(slot);
     fetchAutoPhoto(city);
   }
@@ -360,6 +856,7 @@ function renderList() {
 }
 
 function openOverlay(el) {
+  exitPanMode();
   closeAllOverlays();
   el.hidden = false;
 }
@@ -414,8 +911,23 @@ if (isExtensionPanel) {
 
   document.addEventListener("keydown", (ev) => {
     if (ev.key !== "Escape") return;
-    closeAllOverlays();
+    const overlayOpen =
+      (settingsPanel && !settingsPanel.hidden) || (addPanel && !addPanel.hidden);
+    if (overlayOpen) {
+      closeAllOverlays();
+      return;
+    }
+    exitPanMode();
   });
+
+  const onGlobalPointerEnd = (ev) => {
+    if (!panDrag) return;
+    const slot = listEl.querySelector(slotSelector(panDrag.id));
+    endPanDrag(slot, ev);
+  };
+  document.addEventListener("pointerup", onGlobalPointerEnd);
+  document.addEventListener("pointercancel", onGlobalPointerEnd);
+  window.addEventListener("pagehide", () => finishActiveDrag(true));
 
   cityInput.addEventListener("input", () => {
     const found = resolveZone(cityInput.value);
@@ -472,9 +984,13 @@ if (isExtensionPanel) {
     pendingPhotoId = null;
     if (!file || !id) return;
     try {
+      stopPanForCity(id);
       const url = await resizeUserPhoto(file);
-      photos[id] = { source: "user", url };
-      const wrote = await mergePhotoRecord(id, { source: "user", url });
+      const wikiUrl = rememberedWikiUrl(photos[id]);
+      const rec = wikiUrl
+        ? { source: "user", url, wikiUrl, pos: null }
+        : { source: "user", url, pos: null };
+      const wrote = await mergePhotoRecord(id, rec);
       const live = listEl.querySelector(slotSelector(id));
       if (!wrote) {
         if (live) live.title = "Could not save that photo";
@@ -485,7 +1001,7 @@ if (isExtensionPanel) {
         }
         return;
       }
-      applyPhotoToSlot(live, { source: "user", url });
+      applyPhotoToSlot(live, photos[id]);
       const btn = live && live.querySelector(".photo-btn");
       if (btn) btn.title = "Restore Wikipedia photo";
     } catch (_) {
@@ -500,6 +1016,7 @@ async function refreshFromStorage() {
   try {
     await loadState();
     await loadPhotos();
+    prunePhotos();
     if (use24HourEl) use24HourEl.checked = state.use24Hour;
     if (showSecondsEl) showSecondsEl.checked = state.showSeconds;
     renderList();
@@ -535,6 +1052,11 @@ async function init() {
         return;
       }
       if (area === "local" && Object.prototype.hasOwnProperty.call(changes, "photos")) {
+        if (pendingPhotoWrites > 0) return;
+        if (panningId || panDrag) {
+          skippedPhotoRefresh = true;
+          return;
+        }
         refreshFromStorage();
       }
     });

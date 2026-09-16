@@ -4,6 +4,20 @@ World Clock Tab is a Manifest V3 extension for Brave and Chrome. It replaces the
 
 This codebase was written from scratch. It is not a fork of the Chrome Web Store extension World Clocks.
 
+## Demo
+
+Watch a short walkthrough on YouTube: [World Clock Tab demo](https://youtu.be/D7P-_ZZLcUg)
+
+[![World Clock Tab — New Tab overview](screenshots/slides/World%20Clock%20Tab1.png)](https://youtu.be/D7P-_ZZLcUg)
+
+![Extension panel with city reorder, photos, and toolbar clock](screenshots/slides/World%20Clock%20Tab2.png)
+
+![Add city dialog with time zone hint and optional display name](screenshots/slides/World%20Clock%20Tab3.png)
+
+![Settings for 24-hour format and seconds](screenshots/slides/World%20Clock%20Tab4.png)
+
+![Move a city photo and reset its position](screenshots/slides/World%20Clock%20Tab5.png)
+
 ## Features
 
 The New Tab page is the **home tab**. It is display-only: columns, photos, and times, with no header, settings, or edit buttons. You configure the extension from the **extension panel**, the popup that opens when you click the pinned toolbar icon.
@@ -18,7 +32,7 @@ The clock uses 24-hour time by default. Seconds are optional and appear only on 
 
 When you add a city, type a city name and the matching IANA time zone appears as a hint. You can set an optional display name that differs from the name used to look up the zone.
 
-City photos come from Wikipedia through the public REST and OpenSearch APIs, with a local cache. You can override a photo from the extension panel and restore the Wikipedia image later.
+City photos come from Wikipedia through the public REST and OpenSearch APIs, with a local cache. You can override a photo from the extension panel and restore the Wikipedia image later. In the extension panel, Move photo lets you drag a picture so a different part of it shows in the column, and Reset puts it back in the centre.
 
 ## Install unpacked
 

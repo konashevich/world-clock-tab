@@ -22,7 +22,7 @@ Open a new tab and see your cities at a glance. The home page is display-only: n
 
 **Extension panel**
 
-Click the pinned toolbar icon to manage everything: add or remove cities (up to eight), reorder columns with ‹ and › buttons, change photos, open settings, and choose which city drives the toolbar analog clock.
+Click the pinned toolbar icon to manage everything: add or remove cities (up to eight), reorder columns with ‹ and › buttons, change or reposition photos, open settings, and choose which city drives the toolbar analog clock.
 
 **Toolbar analog clock**
 
@@ -34,7 +34,7 @@ Select any city on the home tab or in the panel. The browser toolbar icon become
 
 **City photos**
 
-Photos are fetched from Wikipedia and Wikimedia Commons when you add a city, then cached locally. You can upload your own image for any city and restore the Wikipedia photo later.
+Photos are fetched from Wikipedia and Wikimedia Commons when you add a city, then cached locally. You can upload your own image for any city and restore the Wikipedia photo later. In the extension panel you can also move a photo: click Move photo, drag the picture, and click Reset to centre it again.
 
 **Defaults**
 
@@ -43,6 +43,10 @@ Sydney, Kyiv, Rome, and London are included on first install. Duplicate time zon
 **Privacy**
 
 Your city list, settings, photo cache, and optional photo overrides stay in your browser. World Clock Tab does not use analytics and does not send your data to a first-party server. Wikipedia is contacted only to look up city article summaries and images.
+
+## What's new (this release — paste into Store listing)
+
+You can now reposition a city photo in the extension panel. Click Move photo, drag the picture to the part you want to see, and click Reset if you want it centred again.
 
 ## Category
 
@@ -71,12 +75,12 @@ https://konashevich.github.io/world-clock-tab/privacy-policy.html
 Upload from `store/screenshots/` in this order:
 
 1. `01-new-tab-home.png` — primary New Tab view (clean, no annotations)
-2. `04-slide2.png` — extension panel overview with feature callouts
-3. `05-slide3.png` — add city flow
-4. `06-slide4.png` — settings
-5. `03-slide1.png` — marketing overview (optional fifth slot)
+2. `02-extension-panel.png` — extension panel with photo and reorder controls
+3. `07-move-photo.png` — Move photo and Reset callouts (new in 1.1.13)
+4. `05-slide3.png` — add city flow
+5. `06-slide4.png` — settings
 
-Use at most five. Prefer the first four if you want a mix of clean UI and annotated feature slides.
+Use at most five. Drop the old marketing overview and the pre-pan panel callout slide.
 
 ## Promotional images
 

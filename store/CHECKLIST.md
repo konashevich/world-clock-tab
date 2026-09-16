@@ -14,25 +14,45 @@
 | Privacy policy text | **Live** | https://konashevich.github.io/world-clock-tab/privacy-policy.html |
 | Privacy dashboard answers | Ready | `store/dashboard-privacy-fields.md` |
 | Promotional video (YouTube) | **Live** | https://youtu.be/D7P-_ZZLcUg |
+| Chrome Web Store developer account | **Exists** | `konoshevich@gmail.com` (publisher `d7a941da-a849-4e7a-aca2-86ca562d724d`) |
 | ZIP packaging script | Ready | `scripts/package-webstore.sh` |
 
-## You still need to do manually
+## Publisher (already registered)
 
-1. **Developer account** — Register at [Chrome Web Store Developer Dashboard](https://chrome.google.com/webstore/devconsole) if you have not already ($5 one-time registration fee).
+Do not register a new developer account. This machine’s Chrome Web Store publisher is already `konoshevich@gmail.com`. The publisher ID (same as Google Drive Pin Folder) is:
 
-2. **Privacy policy URL** — **Done.** Paste this into the dashboard: `https://konashevich.github.io/world-clock-tab/privacy-policy.html`
+```text
+d7a941da-a849-4e7a-aca2-86ca562d724d
+```
 
-3. **Promotional video** — **Done.** Paste https://youtu.be/D7P-_ZZLcUg into **Promotional video**.
+Dashboard:
 
-4. **Create the store item** — Dashboard → New item → upload the ZIP from `scripts/package-webstore.sh`.
+https://chrome.google.com/webstore/devconsole/d7a941da-a849-4e7a-aca2-86ca562d724d
 
-5. **Fill Store listing** — Paste text from `store/listing.md`; upload images from `store/screenshots/` and `store/promo/`.
+World Clock Tab item ID (Chrome Web Store):
 
-6. **Fill Privacy practices** — Use `store/dashboard-privacy-fields.md`.
+```text
+gjgdmfedocjbfmgagddlgeminflhdmek
+```
 
-7. **Distribution** — Choose visibility (Public / Unlisted), countries, and whether it is free.
+Item editor:
 
-8. **Submit for review** — First review often takes a few business days; New Tab overrides can receive extra scrutiny.
+https://chrome.google.com/webstore/devconsole/d7a941da-a849-4e7a-aca2-86ca562d724d/gjgdmfedocjbfmgagddlgeminflhdmek/edit
+
+## Dashboard status
+
+Live item is **1.1.12**. Package **1.1.13** is uploaded and **PENDING_REVIEW** (submitted 16 September 2026). It adds photo reposition (Move photo / Reset) in the extension panel.
+
+Store listing screenshots and What’s new cannot be changed through the API. After review, or while the item is in the dashboard, paste the What’s new text from `store/listing.md` and replace listing screenshots with:
+
+1. `store/screenshots/01-new-tab-home.png`
+2. `store/screenshots/02-extension-panel.png`
+3. `store/screenshots/07-move-photo.png`
+4. `store/screenshots/05-slide3.png`
+5. `store/screenshots/06-slide4.png`
+
+Privacy policy: https://konashevich.github.io/world-clock-tab/privacy-policy.html  
+Promo video: https://youtu.be/D7P-_ZZLcUg
 
 ## Optional improvements (not blocking)
 

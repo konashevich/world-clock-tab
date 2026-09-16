@@ -10,7 +10,7 @@ Replace the browser New Tab page with a multi-city world clock display, and prov
 
 ### storage
 
-Stores your city list, selected toolbar city, 24-hour/seconds preferences, Wikipedia photo cache, and optional custom photo overrides locally in the browser. Required for the extension to remember settings between sessions and sync cities across devices when Chrome sync is enabled.
+Stores your city list, selected toolbar city, 24-hour/seconds preferences, Wikipedia photo lookup metadata, and optional custom photo overrides in chrome.storage. Wikimedia image files for assigned cities are kept in the browser Cache Storage so they do not need to be downloaded on every New Tab. Required for the extension to remember settings between sessions and sync cities across devices when Chrome sync is enabled.
 
 ### alarms
 
@@ -22,7 +22,7 @@ Fetches public Wikipedia article summaries and page titles when you add a city o
 
 ### Host permission: https://upload.wikimedia.org/* and https://thumb.wikimedia.org/*
 
-Downloads Wikimedia Commons images referenced by Wikipedia for city column backgrounds. Images are cached locally after download.
+Downloads Wikimedia Commons images referenced by Wikipedia for city column backgrounds. After download, those files are stored in the browser Cache Storage on your device. On browser start the extension may fetch any assigned city photos that are missing from that cache. The minute toolbar-clock alarm does not download photos.
 
 ## Remote code
 

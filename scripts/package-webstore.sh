@@ -20,6 +20,7 @@ rm -f "$ZIP_PATH"
     -x './scripts/*' \
     -x './screenshots/*' \
     -x './store/*' \
+    -x './docs/*' \
     -x './preview-*.html' \
     -x './icons/mock/*' \
     -x './icons/brand-slots*.png' \
@@ -31,7 +32,7 @@ rm -f "$ZIP_PATH"
     -x './.gitignore' \
     -x './AGENTS.md' \
     -x './README.md' \
-    -x './LICENSE'
+    -x './LICENSE' >&2
 )
 
 if ! unzip -l "$ZIP_PATH" | grep -q 'manifest.json'; then

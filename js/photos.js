@@ -1,3 +1,5 @@
+import { ensureCached } from "./image-cache.js";
+
 const API_UA = "WorldClockTab/1.1.0";
 const CACHE_KEY = "wctWikiPhotos";
 const SUMMARY_URL = "https://en.wikipedia.org/api/rest_v1/page/summary/";
@@ -202,28 +204,9 @@ function candidateImageUrls(data) {
   return urls;
 }
 
-function preloadImage(url) {
-  return new Promise((resolve) => {
-    const img = new Image();
-    let settled = false;
-    const finish = (ok) => {
-      if (settled) return;
-      settled = true;
-      img.onload = null;
-      img.onerror = null;
-      resolve(ok);
-    };
-    const timer = setTimeout(() => finish(false), 6000);
-    img.onload = () => {
-      clearTimeout(timer);
-      finish(true);
-    };
-    img.onerror = () => {
-      clearTimeout(timer);
-      finish(false);
-    };
-    img.src = url;
-  });
+async function preloadImage(url) {
+  const blob = await ensureCached(url);
+  return Boolean(blob && blob.size);
 }
 
 async function firstLoadableUrl(urls) {
@@ -302,8 +285,7 @@ async function tryTitlesForPhoto(titleList, seen) {
       if (await preloadImage(cached.url)) {
         return { photo: cached, definitive: true, sawNetworkError, sawDefinitiveMiss };
       }
-      delete photoCache[title];
-      schedulePersist();
+      sawNetworkError = true;
     }
     try {
       const summary = await fetchSummary(title);
@@ -335,8 +317,7 @@ async function resolvePhotoForTitles(titles) {
   if (searched) {
     if (!isUsableCachedPhoto(searched)) return { photo: null, definitive: true };
     if (await preloadImage(searched.url)) return { photo: searched, definitive: true };
-    delete photoCache[searchKey];
-    schedulePersist();
+    sawNetworkError = true;
   }
   try {
     const skylineHits = await searchTitles(seed + " skyline");

@@ -1,6 +1,7 @@
 import { DEFAULT_CITIES, workingTz, sanitizeCities, copyDefaults } from "./cities.js";
 import { zoneTimeParts } from "./time.js";
 import { analogIconImageData } from "./icon.js";
+import { warmUrls, wikiUrlsFromPhotoMap } from "./image-cache.js";
 
 const ALARM = "wct-tick";
 const FALLBACK_ICON = {
@@ -95,6 +96,20 @@ async function paintIcon() {
   }
 }
 
+function isPhotoMap(value) {
+  return Boolean(value) && typeof value === "object" && !Array.isArray(value);
+}
+
+async function warmPhotoCache() {
+  try {
+    const raw = await chrome.storage.local.get("photos");
+    const photos = isPhotoMap(raw.photos) ? raw.photos : {};
+    await warmUrls(wikiUrlsFromPhotoMap(photos));
+  } catch (_) {
+    /* ignore */
+  }
+}
+
 chrome.runtime.onInstalled.addListener(() => {
   chrome.storage.sync.get(["cities"], (raw) => {
     const sanitized = sanitizeCities(raw.cities);
@@ -109,11 +124,13 @@ chrome.runtime.onInstalled.addListener(() => {
   });
   ensureAlarm();
   paintIcon();
+  warmPhotoCache();
 });
 
 chrome.runtime.onStartup.addListener(() => {
   ensureAlarm();
   paintIcon();
+  warmPhotoCache();
 });
 
 chrome.alarms.onAlarm.addListener((alarm) => {

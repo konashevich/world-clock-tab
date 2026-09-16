@@ -30,7 +30,7 @@ World Clock Tab was therefore written **from scratch** (vanilla JS/CSS, new modu
 - Reorder cities only in the extension panel, with ‹ and › buttons on each column (not drag-and-drop, not on the home tab). The first column has no left arrow and the last has no right arrow. Order is stored in `chrome.storage.sync`, so the home tab follows without its own controls.
 - 24-hour on by default; seconds optional and digital-only on both surfaces.
 - Max 8 cities; cannot delete the last city; duplicate time zones (including IANA aliases such as Kyiv/Kiev) are rejected.
-- Photos: Wikipedia REST/opensearch pipeline with local cache; optional user photo override and restore to Wikipedia.
+- Photos: Wikipedia REST/opensearch pipeline with local cache; optional user photo override and restore to Wikipedia. In the extension panel, Move photo (✥) lets you drag a city picture; Reset (↺) restores centre. The home tab is still display-only.
 - Branding globe SVG may exist as static fallback icons. The runtime toolbar icon is a drawn analog face: white disk filling the square, dark rim, four ticks at 16px (twelve on larger sizes), thick dark hour and minute hands (the Fill + high contrast design).
 
 ## Prior discussion
@@ -45,5 +45,5 @@ Full design and rewrite discussion (started in the World Clock Plus workspace):
 2. The store extension was copied into World Clock Plus and enhanced (photos, UI cleanup), then stopped as a fork because of the missing license.
 3. World Clock Tab was built from scratch with the decisions above, reviewed and bug-fixed in place (zones, photo races, overlays, alarm/icon painting).
 4. The first private unpacked build was a toolbar popup only. The New Tab override (`newtab.html`) was added so Brave/Chrome treat this extension as the default new-tab page, matching the original product intent.
-5. Ready for private unpacked use in Brave. Store listing copy, 1280×800 screenshots, promo tiles, privacy policy draft, and `scripts/package-webstore.sh` live under `store/`; still need hosted privacy URL, YouTube upload for demo video, and dashboard submission.
+5. Ready for private unpacked use in Brave. Chrome Web Store item `gjgdmfedocjbfmgagddlgeminflhdmek` is public at version 1.1.12; 1.1.13 adds photo reposition in the extension panel. Privacy policy and demo video are live (`https://konashevich.github.io/world-clock-tab/privacy-policy.html`, `https://youtu.be/D7P-_ZZLcUg`).
 6. City reorder was added later as ‹ › arrows in the extension panel so the home tab stays display-only.
