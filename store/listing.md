@@ -75,12 +75,10 @@ https://konashevich.github.io/world-clock-tab/privacy-policy.html
 Upload from `store/screenshots/` in this order:
 
 1. `01-new-tab-home.png` — primary New Tab view (clean, no annotations)
-2. `02-extension-panel.png` — extension panel with photo and reorder controls
-3. `07-move-photo.png` — Move photo and Reset callouts (new in 1.1.13)
-4. `05-slide3.png` — add city flow
-5. `06-slide4.png` — settings
-
-Use at most five. Drop the old marketing overview and the pre-pan panel callout slide.
+2. `04-slide2.png` — extension panel map: photo, move photo, delete, order, add city, toolbar clock
+3. `05-slide3.png` — add city flow
+4. `06-slide4.png` — settings
+5. `03-slide1.png` — marketing overview
 
 ## Promotional images
 

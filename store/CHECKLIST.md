@@ -46,10 +46,10 @@ Live item is **1.1.12**. Package **1.1.13** is uploaded and **PENDING_REVIEW** (
 Store listing screenshots and What’s new cannot be changed through the API. After review, or while the item is in the dashboard, paste the What’s new text from `store/listing.md` and replace listing screenshots with:
 
 1. `store/screenshots/01-new-tab-home.png`
-2. `store/screenshots/02-extension-panel.png`
-3. `store/screenshots/07-move-photo.png`
-4. `store/screenshots/05-slide3.png`
-5. `store/screenshots/06-slide4.png`
+2. `store/screenshots/04-slide2.png`
+3. `store/screenshots/05-slide3.png`
+4. `store/screenshots/06-slide4.png`
+5. `store/screenshots/03-slide1.png`
 
 Privacy policy: https://konashevich.github.io/world-clock-tab/privacy-policy.html  
 Promo video: https://youtu.be/D7P-_ZZLcUg

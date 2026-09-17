@@ -16,8 +16,6 @@ Watch a short walkthrough on YouTube: [World Clock Tab demo](https://youtu.be/D7
 
 ![Settings for 24-hour format and seconds](screenshots/slides/World%20Clock%20Tab4.png)
 
-![Move a city photo and reset its position](screenshots/slides/World%20Clock%20Tab5.png)
-
 ## Features
 
 The New Tab page is the **home tab**. It is display-only: columns, photos, and times, with no header, settings, or edit buttons. You configure the extension from the **extension panel**, the popup that opens when you click the pinned toolbar icon.
